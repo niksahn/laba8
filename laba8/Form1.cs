@@ -1,5 +1,6 @@
 using Microsoft.VisualBasic.Logging;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace laba8
 {
@@ -9,10 +10,12 @@ namespace laba8
         int[] M;
         List<int>[] mas;
         const int maxAdres = 999;
+        const int maxAdres2 = 9999;
         int compr = 0;
-        const int maxNumber = 100000;
+        const int maxNumber = 10000;
         int[] moa = new int[maxNumber];
         const int maxNumber2 = 20000;
+        int[] M2 = new int[maxNumber];
         public Form1()
         {
             InitializeComponent();
@@ -63,7 +66,7 @@ namespace laba8
                 clearHesh();
                 for (int j = 0; j < arrSize; j++)
                 {
-                    adres = heshMulti(M[j]);
+                    adres = heshMulti(M[j], maxAdres);
                     if (mas[adres].Count != 0) k4++;
                     mas[adres].Add(M[j]);
                 }
@@ -112,10 +115,10 @@ namespace laba8
             hashValue %= divider;
             return hashValue;
         }
-        private int heshMulti(int k)
+        private int heshMulti(int k, int maxadr)
         {
             double a = (Math.Sqrt(5) - 1) / 2;
-            return ((int)((maxAdres + 1) * ((k * a) % 1)));
+            return ((int)((maxadr + 1) * ((k * a) % 1)));
         }
 
 
@@ -151,43 +154,58 @@ namespace laba8
         {
             Random rnd = new Random();
             int sr = 0;
-            int k = 0; 
+            int k = 0;
+            int k1 = 0;
+            int sr1 = 0;
             M = new int[maxNumber];
             for (int i = 0; i < maxNumber; i++)
             {
                 M[i] = (int)rnd.Next(0, maxNumber);
 
             }
-            for (int i = 0 ; i < maxNumber; i++)
-            {
-                moa[i] = 0; 
-            }
-            for(int i = 0;i < maxNumber ;i++) 
-            {
-                fill_moaVar(M[i], heshMulti(M[i]), moa);
-            }
-            M = new int[maxNumber];
+            mas = new List<int>[maxNumber + 1];
+            
             for (int i = 0; i < maxNumber; i++)
             {
-                M[i] = (int)rnd.Next(0, maxNumber2);
+                moa[i] = -1;
+                mas[i] = new List<int>();
+            }
+            for (int i = 0; i < maxNumber; i++)
+            {
+                fill_moaVar(M[i], heshMulti(M[i], maxAdres2), moa);
+                fill_chains(M[i], heshMulti(M[i], maxAdres2), mas);
+            }
+            for (int i = 0; i < maxNumber; i++)
+            {
+                M2[i] = (int)rnd.Next(0, maxNumber2);
 
             }
             var start = Environment.TickCount;
-            for(int i = 0 ;i < maxNumber; i++) {
-                int[] rez = find_key_moa(M[i], moa);
+            for (int i = 0; i < maxNumber; i++)
+            {
+                int[] rez = find_key_moa(M2[i], heshMulti(M2[i], maxAdres2), moa);
                 k += rez[1];
-                sr+= rez[0];
+                sr += rez[0];
             }
             textBox5.Text = (Environment.TickCount - start).ToString();
             textBox7.Text = (k).ToString();
-            textBox6.Text = (sr).ToString();
-
+            textBox6.Text = (sr / maxNumber).ToString();
+            start = Environment.TickCount;
+            for (int i = 0; i < maxNumber; i++)
+            {
+                int[] rez = find_key_chains(M2[i], heshMulti(M2[i], maxAdres2), mas);
+                k1 += rez[1];
+                sr1 += rez[0];
+            }
+            textBox10.Text = (Environment.TickCount - start).ToString();
+            textBox8.Text = (k1).ToString();
+            textBox9.Text = ((float)(sr1)/maxNumber).ToString();
         }
 
-        private void fill_moaVar(int key,int hesh, int[] arr)
+        private void fill_moaVar(int key, int hesh, int[] arr)
         {
             int i = hesh;
-            while (arr[i]!=0)
+            while (arr[i] != -1)
             {
                 if (i < maxNumber - 1) i++;
                 else i = 0;
@@ -196,10 +214,15 @@ namespace laba8
             arr[i] = key;
         }
 
-
-        private int[] find_key_moa(int key, int[] arr)
+        private void fill_chains(int key, int hesh, List<int>[] mas)
         {
-            int hesh = heshMulti(key);
+            mas[hesh].Add(key);
+        }
+
+
+
+        private int[] find_key_moa(int key, int hesh, int[] arr)
+        {
             int i = hesh;
             int sr = 0;
             int k = 0;
@@ -211,7 +234,25 @@ namespace laba8
                 if (i == hesh) break;
             }
             if (arr[i] == key) k = 1;
-            return new int[] { sr, k};
+            ///else sr = 0;
+            return new int[] { sr, k };
+        }
+
+        private int[] find_key_chains(int key, int hesh, List<int>[] ar)
+        {
+            int k = 0;
+            int sr = 1;
+            foreach (var item in ar[hesh])
+            {
+                
+                if (item == key)
+                {
+                    k = 1;
+                    break;
+                }
+                sr += 1;
+            }
+            return new int[] { sr, k };
         }
     }
 }
